@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CMA Report Generator — Alan Wang Realty Group</title>
+<style>
+  :root{--navy:#1b3a5c;--nd:#142d48;--gold:#c6a44e;--gl:#d4b76a;--ow:#f7f8fa;--gb:#d9dde3;--gt:#5a6270;--gx:#eef0f3;--tx:#23272e;--font:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;--mono:"SF Mono","Fira Mono",Menlo,monospace}
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:var(--font);background:#e8ecf1;color:var(--tx);-webkit-font-smoothing:antialiased}
+  .screen{display:none}.screen.on{display:block}
+
+  /* INPUT */
+  #s1{max-width:680px;margin:0 auto;padding:40px 24px}
+  .ey{font-size:11px;font-weight:700;letter-spacing:.12em;color:var(--gold);text-transform:uppercase;margin-bottom:4px}
+  .ti{font-size:24px;font-weight:300;color:var(--navy);margin-bottom:6px}
+  .su{color:var(--gt);font-size:13px;line-height:1.5;margin-bottom:20px}
+  .hw{background:#fffaf0;border:1px solid #ede0c4;border-radius:6px;padding:14px 18px;margin-bottom:20px}
+  .hw h3{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#9a8254;margin-bottom:6px}
+  .hw ol{font-size:12.5px;line-height:1.7;padding-left:16px}
+  .hw kbd{background:#fff;border:1px solid var(--gb);border-radius:3px;padding:1px 4px;font-size:10.5px;font-family:var(--mono)}
+  #pa{width:100%;min-height:170px;padding:12px 14px;border:1px solid var(--gb);border-radius:6px;font-family:var(--mono);font-size:11.5px;resize:vertical;outline:none;margin-bottom:18px}
+  #pa:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(198,164,78,.12)}
+  .fg{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
+  .fg label{display:block;font-size:10px;font-weight:600;color:var(--gt);letter-spacing:.06em;text-transform:uppercase;margin-bottom:3px}
+  .fg input,.fg textarea,.fg select{width:100%;padding:7px 10px;border:1px solid var(--gb);border-radius:5px;font-size:13px;font-family:var(--font);outline:none}
+  .fg textarea{min-height:60px;resize:vertical}.fg .full{grid-column:1/-1}
+  .fg select{background:#fff}
+  .btn{padding:12px 36px;border:none;border-radius:5px;font-size:14px;font-weight:600;cursor:pointer;font-family:var(--font);margin-top:8px}
+  .btn-navy{background:var(--navy);color:#fff}.btn-navy:hover{background:var(--nd)}
+  .btn-navy:disabled{background:var(--gb);cursor:default}
+  #loading{display:none;margin-top:12px;font-size:13px;color:var(--gt)}
+  #loading.on{display:block}
+  .spin{display:inline-block;width:14px;height:14px;border:2px solid var(--gb);border-top-color:var(--gold);border-radius:50%;animation:sp .6s linear infinite;vertical-align:middle;margin-right:6px}
+  @keyframes sp{to{transform:rotate(360deg)}}
+
+  /* REPORT */
+  .bar{position:sticky;top:0;z-index:100;background:var(--nd);padding:8px 20px;display:flex;justify-content:space-between;align-items:center}
+  .bar span{color:var(--gold);font-size:11px;font-weight:700;letter-spacing:.08em}
+  .bar .bb{display:flex;gap:8px}
+  .bar button{padding:5px 14px;border-radius:4px;font-size:11.5px;cursor:pointer;font-family:var(--font);font-weight:600}
+  .be{background:transparent;color:#fff;border:1px solid rgba(255,255,255,.3)}.be:hover{border-color:rgba(255,255,255,.6)}
+  .bp{background:var(--gold);color:var(--nd);border:none}.bp:hover{background:var(--gl)}
+
+  .rpt{max-width:850px;margin:0 auto;background:#fff;box-shadow:0 1px 4px rgba(0,0,0,.06)}
+  .rh{background:linear-gradient(135deg,var(--navy) 0%,#24537a 80%,var(--navy) 100%);padding:28px 36px 22px;position:relative;overflow:hidden}
+  .rh::after{content:'';position:absolute;top:-30px;right:-40px;width:260px;height:260px;border-radius:50%;background:radial-gradient(circle,rgba(198,164,78,.10) 0%,transparent 70%)}
+  .rh h1{font-size:28px;font-weight:300;color:#fff;position:relative;z-index:1}
+  .rh .rs{font-size:14px;color:rgba(255,255,255,.75);margin-top:4px;position:relative;z-index:1}
+  .rh .rd{position:absolute;top:28px;right:36px;color:rgba(255,255,255,.7);font-size:13px;z-index:1}
+
+  .pb{background:#fdfaf2;border-bottom:1px solid #ede0c4;padding:14px 36px;display:flex;align-items:center;gap:24px}
+  .pb .pl{font-size:9.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#9a8254;margin-bottom:1px}
+  .pb .pv{font-size:22px;font-weight:400;color:var(--navy)}
+  .pb .pn{flex:1;border-left:1px solid #ede0c4;padding-left:18px}
+  .pb .pn p{font-size:12px;color:var(--gt);line-height:1.5;margin-top:2px}
+
+  .rb{padding:24px 36px 16px}
+  .rb>h2{font-size:17px;font-weight:600;margin-bottom:2px}
+  .rb>.desc{font-size:11.5px;color:var(--gt);margin-bottom:18px}
+  .fn{font-size:11px;color:var(--gt);background:var(--ow);border:1px solid var(--gx);border-radius:4px;padding:8px 14px;margin-bottom:18px}
+  .fn b{color:var(--navy)}
+
+  .sl{font-size:13px;font-weight:700;color:var(--navy);margin-top:18px}
+  .ct{width:100%;border-collapse:collapse;font-size:12px;margin-bottom:16px}
+  .ct thead{background:var(--navy)}
+  .ct th{padding:6px 5px;color:#fff;font-size:10px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;text-align:right;border:none}
+  .ct th:first-child{text-align:left;padding-left:8px}.ct th.l{text-align:left}
+  .ct td{padding:5px 5px;text-align:right;border-bottom:1px solid var(--gx)}.ct td:first-child{text-align:left;padding-left:8px}.ct td.l{text-align:left}
+  .ct .sr{background:#f0f4f8}.ct .sr td{font-weight:600;color:var(--navy);border-bottom:1px solid var(--gb)}
+  .ct .sd{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--gold);margin-right:5px;vertical-align:middle}
+  .ct .ar{background:var(--ow);border-top:1.5px solid var(--gb)}.ct .ar td{font-weight:700;font-size:11px;color:var(--navy)}
+  .ct .ml{font-family:var(--mono);font-size:10.5px;color:var(--gt)}.ct .dm{color:var(--gt);font-size:11px}.ct .fw{font-weight:600}
+  .ct a.lk{color:var(--navy);text-decoration:none;border-bottom:1px dashed var(--gold)}.ct a.lk:hover{border-bottom-style:solid}
+
+  .ss{margin-top:22px;margin-bottom:16px}.ss h3{font-size:14px;font-weight:600;margin-bottom:0}
+  .st{width:100%;border-collapse:collapse;font-size:12px}.st thead{background:var(--navy)}
+  .st th{padding:6px 6px;color:#fff;font-size:10px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;text-align:right}.st th:first-child{text-align:left;padding-left:8px}
+  .st td{padding:6px 6px;text-align:right;border-bottom:1px solid var(--gx)}.st td:first-child{text-align:left;padding-left:8px;font-weight:500}
+  .st .tr{background:var(--navy);color:#fff}.st .tr td{color:#fff;font-weight:700;border:none}
+
+  .rf{border-top:2px solid var(--gold);padding:14px 36px;display:flex;justify-content:space-between;align-items:flex-start}
+  .rf .al{font-size:10px;color:var(--gt);margin-bottom:1px}.rf .an{font-size:15px;font-weight:700;color:var(--navy)}.rf .ai{font-size:11.5px;color:var(--gt)}
+  .rf .di{text-align:right;max-width:340px;font-size:8.5px;color:#9ca3af;line-height:1.4}
+
+  @media print{.bar{display:none!important}body{background:#fff!important}.rpt{box-shadow:none;max-width:100%}@page{margin:.3in;size:letter}*{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}}
+</style>
+</head>
+<body>
+
+<div id="s1" class="screen on">
+  <div class="ey">Alan Wang Realty Group</div>
+  <div class="ti">CMA Report Generator</div>
+  <p class="su">Paste your MLS report, fill in the details, and generate a professional CMA in seconds.</p>
+  <div class="hw"><h3>How it works</h3><ol>
+    <li>On MLSListings, open the CMA for a property</li>
+    <li>Select all text (<kbd>Cmd</kbd>+<kbd>A</kbd>) and copy (<kbd>Cmd</kbd>+<kbd>C</kbd>)</li>
+    <li>Paste below and click <strong>Generate Report</strong></li>
+  </ol></div>
+  <textarea id="pa" placeholder="Paste CMA text here..."></textarea>
+  <div class="fg">
+    <div><label>Agent Name</label><input type="text" id="fn" value="Alan Wang"></div>
+    <div><label>Brokerage</label><input type="text" id="fb" value="KW Elevate"></div>
+    <div><label>Phone</label><input type="text" id="fp" value="(408) 313-4352"></div>
+    <div><label>License # (optional)</label><input type="text" id="fl" value=""></div>
+    <div><label>Subject School Zone</label>
+      <select id="fz">
+        <option value="">— Not set —</option>
+        <option>Cupertino Union SD</option><option>Sunnyvale SD</option>
+        <option>Santa Clara Unified</option><option>Fremont Union HSD</option>
+        <option>Mountain View Whisman SD</option><option>Los Altos SD</option>
+        <option>Campbell Union SD</option><option>San Jose Unified</option>
+        <option>Milpitas Unified</option><option>Palo Alto Unified</option>
+        <option>Saratoga Union SD</option><option>Los Gatos Union SD</option>
+      </select>
+    </div>
+    <div><label>Suggested List Price (optional)</label><input type="text" id="fpr" placeholder="e.g. $1,150,000"></div>
+    <div class="full"><label>Pricing Notes (optional)</label><textarea id="fno" placeholder="e.g. Based on recent sold comps adjusted for condition..."></textarea></div>
+  </div>
+  <button class="btn btn-navy" id="gobtn" onclick="go()">Generate Report &rarr;</button>
+  <div id="loading"><span class="spin"></span><span id="load-text">Analyzing comparables...</span></div>
+</div>
+
+<div id="s2" class="screen">
+  <div class="bar"><span>CMA REPORT</span><div class="bb">
+    <button class="be" onclick="back()">&#8592; Edit</button>
+    <button class="bp" onclick="window.print()">Print / Save PDF</button>
+  </div></div>
+  <div class="rpt" id="rpt"></div>
+</div>
+
+<script>
+var DISTRICTS=["Cupertino Union SD","Sunnyvale SD","Santa Clara Unified","Fremont Union HSD","Mountain View Whisman SD","Los Altos SD","Campbell Union SD","San Jose Unified","Milpitas Unified","Palo Alto Unified","Saratoga Union SD","Los Gatos Union SD"];
+function e(s){var d=document.createElement("div");d.textContent=s;return d.innerHTML}
+function $(id){return document.getElementById(id)}
+function fm(n){if(n==null||isNaN(n))return"\u2014";return"$"+Number(n).toLocaleString("en-US",{maximumFractionDigits:0})}
+function fd(n){if(n==null||isNaN(n))return"\u2014";return"$"+Number(n).toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2})}
+function md(a){if(!a.length)return 0;var s=a.slice().sort(function(x,y){return x-y}),m=Math.floor(s.length/2);return s.length%2?s[m]:(s[m-1]+s[m])/2}
+
+/* ── PARSER ── */
+function parse(raw){
+  var lines=raw.split("\n").map(function(l){return l.trim()}).filter(Boolean);
+  var sa="",ssf=null,sb="",sba="",sc="";
+  for(var i=0;i<lines.length;i++){var m=lines[i].match(/Subject Property:\s*(.+)/i);if(m){sa=m[1].trim();break}}
+  var gs=[],cs=null,cc=[],sf=false;
+  var sr=/^Status:\s*(.+)/i,mr=/\b(ML\d{8,}|CC\d{8,})\b/;
+  var xr=/^(Address|Average|Summary|Total|Brief|Comparative|A brief|A map|Property Loc|Researched|This represents|by Alan|KW Elevate|appraisal|MLS#|Sub Type|SqFt|Beds|Baths|L\/S|Status Dt|DOM|Avg Price|Avg \$|Median|Low|High|Avg DOM|County|Area|Class|Land Use|Orig Price|List Price|Sale Price|\$\/Primary|HOA|Zoning|Source|Public|Well-positioned|Featuring|Additional|community|an open|flow seamlessly|Stylish|Set within|updated fixtures|L\.Type|Special|Ownership|Fin Terms|Possession|Off Mrkt|Incorp|City Limit|Expires|COE|Original|List:|Sale:|LA:|LA Ph|Walk Score|Recent|Report Listing|\d+\s*\/\s*\d+|Previous|Next|Checked|Display|Agent|All\s*·|None|Page|per page|Listing|Tax|Photos|History|Parcel|Flood|Foreclosure|Actions|Refine|Save|Carts|Criteria|Email|Print|CMA|Directions|Stats|Export|Quick|Cloud|SYMBIUM|ADU|Market Trends)/i;
+  for(var i=0;i<lines.length;i++){
+    var l=lines[i],sm=l.match(sr);
+    if(sm){if(cs&&cc.length)gs.push({status:cs,comps:cc.slice()});cs=sm[1].trim();cc=[];sf=false;continue}
+    if(xr.test(l)||l.length<8)continue;
+    if(cs&&!sf&&sa){var ap=sa.split(",")[0].trim().split(" "),sh=ap.slice(0,3).join(" ");
+      if(l.indexOf(sh)!==-1&&!mr.test(l)){sf=true;var qm=l.match(/(\d[,\d]*)\s+(\d)\s+(\d\/\d)/);if(qm){ssf=parseInt(qm[1].replace(",",""));sb=qm[2];sba=qm[3]}var cm=l.match(/\b(10[0-9])\b/);if(cm)sc=cm[1];continue}}
+    if(cs&&mr.test(l)){var ml=l.match(mr)[1],pm=l.match(/\$[\d,]+/g),pr=pm?parseInt(pm[0].replace(/[$,]/g,"")):null;
+      var mi=l.indexOf(ml),ad=l.substring(0,mi).trim().replace(/\s+\d+\s*$/,"").trim();
+      var st="",tm=l.match(/Res\.\s*(Townhouse|Condominium|Single Family)/i);if(tm)st="Res. "+tm[1];
+      var af=tm?l.substring(l.indexOf(tm[0])+tm[0].length):l.substring(mi+ml.length);
+      var bm=af.match(/(\d\/\d)/),ba=bm?bm[1]:"";
+      var nm=af.match(/\b[\d,]+\b/g)||[],cn=nm.map(function(n){return n.replace(",","")});
+      var sq="",bd="";for(var j=0;j<cn.length;j++){var v=parseInt(cn[j]);if(v>=500&&v<=5000&&!sq)sq=cn[j];else if(v>=1&&v<=10&&sq&&!bd)bd=cn[j]}
+      var dm="",dd=af.match(/(\d+)\s*$/);if(dd&&parseInt(dd[1])<500)dm=dd[1];
+      var dt=l.match(/(\d{1,2}\/\d{1,2}\/\d{2,4})/),sd=dt?dt[1]:"";
+      cc.push({address:ad||"Unknown",mls:ml,subType:st,sqft:sq?parseInt(sq):null,beds:bd,baths:ba,price:pr,statusDt:sd,dom:dm?parseInt(dm):null,status:cs,zone:""})}}
+  if(cs&&cc.length)gs.push({status:cs,comps:cc.slice()});
+  return{subjectAddress:sa,subjectSqFt:ssf,subjectBeds:sb,subjectBaths:sba,subjectCode:sc,statusGroups:gs}
+}
+
+/* ── SCORING (TJ's weights: School 25, SqFt 25, Beds 25, Baths 20, DOM 5) ── */
+function score(c,D,subjZone){
+  var s=0;
+  // Beds (25)
+  var sBd=parseInt(D.subjectBeds)||0,cBd=parseInt(c.beds)||0,bd=Math.abs(cBd-sBd);
+  if(bd===0)s+=25;else if(bd===1)s+=12;
+  // Baths (20)
+  var sFb=parseInt((D.subjectBaths||"0/0").split("/")[0])||0,cFb=parseInt((c.baths||"0/0").split("/")[0])||0,bt=Math.abs(cFb-sFb);
+  if(bt===0)s+=20;else if(bt===1)s+=10;
+  // SqFt (25)
+  if(c.sqft&&D.subjectSqFt){var p=Math.abs(c.sqft-D.subjectSqFt)/D.subjectSqFt;if(p<=.10)s+=25;else if(p<=.20)s+=17;else if(p<=.30)s+=8;}
+  // DOM (5)
+  if(c.dom!=null){if(c.dom<=30)s+=5;else if(c.dom<=60)s+=3;else if(c.dom<=90)s+=1;}
+  // School zone (25)
+  if(subjZone&&c.zone){if(c.zone===subjZone)s+=25;}
+  return Math.min(s,100);
+}
+
+/* ── CENSUS GEOCODER ── */
+function cleanAddr(a){return a.replace(/\s*#\d+\w*/g,"").replace(/\s*(Unit|Apt|Suite|Ste|Bldg)\s*\w*/gi,"").replace(/\s+/g," ").trim()}
+
+function detectZones(comps,cityState,callback){
+  var i=0,total=comps.length;
+  function next(){
+    if(i>=total){callback();return}
+    $("load-text").textContent="Detecting school zones... ("+(i+1)+"/"+total+")";
+    var addr=cleanAddr(comps[i].address);
+    if(addr.indexOf(",")===-1&&cityState)addr+=", "+cityState;
+    censusLookup(addr,function(dist){
+      if(dist)comps[i].zone=dist;
+      i++;setTimeout(next,250);
+    });
+  }
+  next();
+}
+
+function censusLookup(addr,cb){
+  var url="https://geocoding.geo.census.gov/geocoder/geographies/onelineaddress?address="+encodeURIComponent(addr)+"&benchmark=Public_AR_Current&vintage=Current_Current&layers=14,16&format=json";
+  fetch(url).then(function(r){return r.json()}).then(function(d){
+    var dist=null;
+    try{var g=d.result.addressMatches[0].geographies,k=Object.keys(g);
+      for(var j=0;j<k.length;j++){var ly=g[k[j]];if(ly&&ly.length&&ly[0].NAME){dist=ly[0].NAME.replace(/ School District$/i,"").replace(/ Schools$/i,"").trim();if(k[j].toLowerCase().indexOf("elementary")!==-1)break}}}catch(e){}
+    cb(dist);
+  }).catch(function(){cb(null)});
+}
+
+/* ── GENERATE ── */
+function go(){
+  var raw=$("pa").value;if(!raw.trim())return;
+  var D=parse(raw);
+  if(D.statusGroups.length===0){alert("Could not parse comps. Make sure you copied all text from the CMA PDF.");return}
+
+  $("gobtn").disabled=true;
+  $("loading").classList.add("on");
+  $("load-text").textContent="Analyzing comparables...";
+
+  var subjZone=$("fz").value;
+  var cityState="";var pts=D.subjectAddress.split(",");if(pts.length>=2)cityState=pts.slice(1).join(",").trim();
+
+  // Flatten all comps
+  var allComps=[];
+  for(var g=0;g<D.statusGroups.length;g++)for(var c=0;c<D.statusGroups[g].comps.length;c++)allComps.push(D.statusGroups[g].comps[c]);
+
+  // Try Census API for school zones, then render
+  function finish(){
+    $("load-text").textContent="Generating report...";
+    setTimeout(function(){render(D,subjZone);},100);
+  }
+
+  if(subjZone){
+    detectZones(allComps,cityState,finish);
+  }else{
+    finish();
+  }
+}
+
+function render(D,subjZone){
+  var name=$("fn").value||"Alan Wang",brok=$("fb").value||"KW Elevate";
+  var phone=$("fp").value||"",lic=$("fl").value||"";
+  var sp=$("fpr").value||"",sn=$("fno").value||"";
+  var today=new Date().toLocaleDateString("en-US",{month:"long",day:"numeric",year:"numeric"});
+  var cityState="";var pts=D.subjectAddress.split(",");if(pts.length>=2)cityState=pts.slice(1).join(",").trim();
+  function zUrl(addr){var f=addr+(cityState?", "+cityState:"");var sl=f.replace(/[#]/g,"").replace(/\s+/g,"-").replace(/[,]+/g,"-").replace(/-+/g,"-").replace(/(^-|-$)/g,"");return"https://www.zillow.com/homes/"+encodeURIComponent(sl)+"_rb/"}
+
+  // Score and filter
+  var total=0,kept=0;
+  var fGroups=[];
+  for(var g=0;g<D.statusGroups.length;g++){
+    var gr=D.statusGroups[g],good=[];
+    for(var c=0;c<gr.comps.length;c++){
+      total++;
+      var s=score(gr.comps[c],D,subjZone);
+      if(s>=70){good.push(gr.comps[c]);kept++;}
+    }
+    if(good.length)fGroups.push({status:gr.status,comps:good});
+  }
+  // Fallback: if nothing qualifies at 70, lower to 50
+  if(kept===0){
+    fGroups=[];kept=0;
+    for(var g=0;g<D.statusGroups.length;g++){
+      var gr=D.statusGroups[g],good=[];
+      for(var c=0;c<gr.comps.length;c++){if(score(gr.comps[c],D,subjZone)>=50){good.push(gr.comps[c]);kept++;}}
+      if(good.length)fGroups.push({status:gr.status,comps:good});
+    }
+  }
+
+  var h='<div class="rh"><div class="rd">'+today+'</div><h1>Comparative Market Analysis</h1><div class="rs">Subject Property: '+e(D.subjectAddress||"\u2014")+'</div></div>';
+  if(sp){h+='<div class="pb"><div><div class="pl">Suggested List Price</div><div class="pv">'+e(sp)+'</div></div>';if(sn){h+='<div class="pn"><div class="pl">Rationale</div><p>'+e(sn)+'</p></div>'}h+='</div>'}
+
+  h+='<div class="rb"><h2>Brief Summary of Comparable Properties</h2>';
+  h+='<p class="desc">A brief summary of the subject and comparable properties in this market analysis.</p>';
+  var ex=total-kept;
+  if(ex>0)h+='<div class="fn"><b>'+kept+' of '+total+'</b> comps shown — filtered by beds, baths, sq ft, and days on market match to the subject property.'+(subjZone?' School zone: <b>'+e(subjZone)+'</b>.':'')+'</div>';
+
+  for(var g=0;g<fGroups.length;g++){
+    var gr=fGroups[g];
+    h+='<div class="sl">Status: '+e(gr.status)+'</div><table class="ct"><thead><tr>';
+    ["Address","MLS#","Sub Type","SqFt Tot","Beds","Baths","L/S Price","Status Dt","DOM"].forEach(function(c,i){h+='<th'+(i<=2?' class="l"':'')+'>'+c+'</th>'});
+    h+='</tr></thead><tbody>';
+    h+='<tr class="sr"><td><span class="sd"></span>'+e((D.subjectAddress||"Subject").split(",")[0])+'</td><td></td><td class="l">'+(D.subjectCode||"")+'</td><td>'+(D.subjectSqFt?D.subjectSqFt.toLocaleString():"\u2014")+'</td><td>'+(D.subjectBeds||"\u2014")+'</td><td>'+(D.subjectBaths||"\u2014")+'</td><td colspan="3"></td></tr>';
+    var sS=0,cS=0,sB=0,cB=0,sP=0,cP=0,sD=0,cD=0;
+    for(var c=0;c<gr.comps.length;c++){var comp=gr.comps[c];
+      h+='<tr><td><a class="lk" href="'+zUrl(comp.address)+'" target="_blank">'+e(comp.address)+'</a></td>';
+      h+='<td class="ml">'+e(comp.mls)+'</td><td class="l dm">'+e(comp.subType)+'</td>';
+      h+='<td>'+(comp.sqft?comp.sqft.toLocaleString():"\u2014")+'</td><td>'+(comp.beds||"\u2014")+'</td><td>'+(comp.baths||"\u2014")+'</td>';
+      h+='<td class="fw">'+(comp.price?fm(comp.price):"\u2014")+'</td><td class="dm">'+(comp.statusDt||"\u2014")+'</td><td>'+(comp.dom!=null?comp.dom:"\u2014")+'</td></tr>';
+      if(comp.sqft){sS+=comp.sqft;cS++}if(comp.beds){sB+=parseInt(comp.beds);cB++}if(comp.price){sP+=comp.price;cP++}if(comp.dom!=null){sD+=comp.dom;cD++}}
+    h+='<tr class="ar"><td colspan="3" style="text-align:right;padding-right:10px">Average</td><td>'+(cS?Math.round(sS/cS).toLocaleString():"\u2014")+'</td><td>'+(cB?Math.round(sB/cB):"\u2014")+'</td><td></td><td class="fw">'+(cP?fm(Math.round(sP/cP)):"\u2014")+'</td><td></td><td>'+(cD?Math.round(sD/cD):"\u2014")+'</td></tr></tbody></table>';
+  }
+
+  // Summary
+  h+='<div class="ss"><h3>Summary</h3><table class="st"><thead><tr>';
+  ["Status","Total","Avg Price","Avg $ Per Sq.Ft.","Median","Low","High","Avg DOM"].forEach(function(s,i){h+='<th'+(i===0?' style="text-align:left"':'')+'>'+s+'</th>'});
+  h+='</tr></thead><tbody>';
+  var aP=[],aPsf=[],aD=[];
+  for(var g=0;g<fGroups.length;g++){var gr=fGroups[g],pr=[],ps=[],dm=[];
+    for(var c=0;c<gr.comps.length;c++){if(gr.comps[c].price){pr.push(gr.comps[c].price);aP.push(gr.comps[c].price)}if(gr.comps[c].price&&gr.comps[c].sqft){var v=gr.comps[c].price/gr.comps[c].sqft;ps.push(v);aPsf.push(v)}if(gr.comps[c].dom!=null){dm.push(gr.comps[c].dom);aD.push(gr.comps[c].dom)}}
+    var ap=pr.length?pr.reduce(function(a,b){return a+b},0)/pr.length:0;
+    h+='<tr><td>'+e(gr.status)+'</td><td>'+gr.comps.length+'</td><td class="fw">'+fm(Math.round(ap))+'</td><td>'+fd(ps.length?ps.reduce(function(a,b){return a+b},0)/ps.length:0)+'</td><td>'+fm(md(pr))+'</td><td>'+fm(pr.length?Math.min.apply(null,pr):0)+'</td><td>'+fm(pr.length?Math.max.apply(null,pr):0)+'</td><td>'+(dm.length?Math.round(dm.reduce(function(a,b){return a+b},0)/dm.length):"\u2014")+'</td></tr>'}
+  var tAp=aP.length?aP.reduce(function(a,b){return a+b},0)/aP.length:0;
+  h+='<tr class="tr"><td>Total</td><td>'+aP.length+'</td><td>'+fm(Math.round(tAp))+'</td><td>'+fd(aPsf.length?aPsf.reduce(function(a,b){return a+b},0)/aPsf.length:0)+'</td><td>'+fm(md(aP))+'</td><td>'+fm(aP.length?Math.min.apply(null,aP):0)+'</td><td>'+fm(aP.length?Math.max.apply(null,aP):0)+'</td><td>'+(aD.length?Math.round(aD.reduce(function(a,b){return a+b},0)/aD.length):"\u2014")+'</td></tr></tbody></table></div></div>';
+
+  h+='<div class="rf"><div><div class="al">Researched and prepared by</div><div class="an">'+e(name)+'</div><div class="ai">'+e(brok);
+  if(phone)h+=' &middot; '+e(phone);if(lic)h+=' &middot; DRE# '+e(lic);
+  h+='</div></div><div class="di">This represents an estimated sale price for this property. It is not the same as the opinion of value in an appraisal developed by a licensed appraiser under the Uniform Standards of Professional Appraisal Practice.</div></div>';
+
+  $("rpt").innerHTML=h;
+  $("s1").classList.remove("on");$("s2").classList.add("on");
+  $("gobtn").disabled=false;$("loading").classList.remove("on");
+  window.scrollTo(0,0);
+}
+
+function back(){$("s2").classList.remove("on");$("s1").classList.add("on");window.scrollTo(0,0)}
+</script>
+</body>
+</html>
