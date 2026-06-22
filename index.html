@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CMA Report Generator — Alan Wang Realty Group</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css"/>
+<style>
+  :root{--nv:#1b3a5c;--nd:#142d48;--gd:#c6a44e;--gdl:#d4b76a;--ow:#f7f8fa;--gb:#d9dde3;--gt:#5a6270;--gl:#eef0f3;--tx:#23272e;--grn:#2d8a4e;--grb:#edf7f0;--ylw:#b8860b;--ylb:#fef9ec;--red:#c0392b;--reb:#fdf0ee;--font:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;--mono:"SF Mono","Fira Mono",Menlo,monospace}
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:var(--font);background:#e8ecf1;color:var(--tx);-webkit-font-smoothing:antialiased}
+  .screen{display:none}.screen.on{display:block}
+  .ey{font-size:11px;font-weight:700;letter-spacing:.12em;color:var(--gd);text-transform:uppercase;margin-bottom:4px}
+  .btn{border:none;border-radius:5px;font-weight:600;cursor:pointer;font-family:var(--font)}
+
+  /* INPUT */
+  #s1{max-width:700px;margin:0 auto;padding:40px 24px}
+  .ti{font-size:24px;font-weight:300;color:var(--nv);margin-bottom:6px}
+  .su{color:var(--gt);font-size:13px;line-height:1.5;margin-bottom:20px}
+  .hw{background:#fffaf0;border:1px solid #ede0c4;border-radius:6px;padding:14px 18px;margin-bottom:20px}
+  .hw h3{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#9a8254;margin-bottom:6px}
+  .hw ol{font-size:12.5px;line-height:1.7;padding-left:16px}
+  .hw kbd{background:#fff;border:1px solid var(--gb);border-radius:3px;padding:1px 4px;font-size:10.5px;font-family:var(--mono)}
+  #pa{width:100%;min-height:160px;padding:12px 14px;border:1px solid var(--gb);border-radius:6px;font-family:var(--mono);font-size:11.5px;resize:vertical;outline:none;margin-bottom:18px}
+  #pa:focus{border-color:var(--gd)}
+  .fg{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
+  .fg label{display:block;font-size:10px;font-weight:600;color:var(--gt);letter-spacing:.06em;text-transform:uppercase;margin-bottom:3px}
+  .fg input,.fg textarea,.fg select{width:100%;padding:7px 10px;border:1px solid var(--gb);border-radius:5px;font-size:13px;font-family:var(--font);outline:none;background:#fff}
+  .fg textarea{min-height:60px;resize:vertical}.fg .full{grid-column:1/-1}
+  .sec-label{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--nv);margin:18px 0 8px;padding-top:14px;border-top:1px solid var(--gl)}
+
+  /* REVIEW */
+  #s2{max-width:960px;margin:0 auto;padding:24px}
+  .sc{background:var(--nv);color:#fff;border-radius:8px;padding:16px 20px;margin-bottom:14px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px}
+  .sc h3{font-size:16px;font-weight:400}
+  .sc .sts{display:flex;gap:20px}.sc .sv{font-size:18px;font-weight:300}.sc .sl{font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,.5)}
+  .zr{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  .zr label{font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:rgba(255,255,255,.6)}
+  .zr select{padding:5px 8px;border-radius:4px;border:1px solid rgba(255,255,255,.3);background:rgba(255,255,255,.1);color:#fff;font-size:12px;font-family:var(--font)}
+  .zr select option{color:#000;background:#fff}
+  .bd2{padding:5px 12px;border-radius:4px;border:1px solid var(--gd);background:rgba(198,164,78,.15);color:var(--gd);font-size:11px;font-weight:700;cursor:pointer;font-family:var(--font)}
+  #ds{font-size:11px;color:rgba(255,255,255,.7);margin-left:4px}
+
+  /* MAP */
+  .map-bar{background:#fff;border:1px solid var(--gb);border-radius:8px;overflow:hidden;margin-bottom:14px}
+  .map-hdr{padding:8px 14px;display:flex;align-items:center;gap:12px;border-bottom:1px solid var(--gl);flex-wrap:wrap}
+  .map-hdr .mh-label{font-size:12px;font-weight:700;color:var(--nv);text-transform:uppercase;letter-spacing:.06em}
+  .map-hdr .mh-hint{font-size:11px;color:var(--gt)}
+  .map-hdr .mh-count{font-size:11px;color:var(--grn);font-weight:600;margin-left:auto}
+  .map-hdr button{padding:4px 10px;font-size:11px;border:1px solid var(--gb);background:#fff;border-radius:4px;cursor:pointer;font-family:var(--font);font-weight:500;color:var(--gt)}
+  .map-hdr button:hover{background:var(--gl)}
+  #map{height:380px;width:100%}
+  .score-pin{display:flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:50%;font-size:11px;font-weight:700;border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.3);color:#fff;cursor:pointer}
+  .pin-hi{background:var(--grn)}.pin-md{background:var(--ylw)}.pin-lo{background:var(--red)}.pin-ex{background:#aaa}
+  .subj-pin{width:24px;height:24px;background:var(--gd);display:flex;align-items:center;justify-content:center;font-size:16px;clip-path:polygon(50% 0%,61% 35%,98% 35%,68% 57%,79% 91%,50% 70%,21% 91%,32% 57%,2% 35%,39% 35%);color:#fff;filter:drop-shadow(0 1px 2px rgba(0,0,0,.4))}
+
+  .lg{display:flex;gap:16px;margin-bottom:10px;flex-wrap:wrap;align-items:center}
+  .li{display:flex;align-items:center;gap:4px;font-size:11px;color:var(--gt)}
+  .ld{width:10px;height:10px;border-radius:50%;display:inline-block}
+  .ch{display:grid;grid-template-columns:36px 1fr auto;padding:4px 14px;gap:12px;font-size:9.5px;font-weight:600;color:var(--gt);letter-spacing:.06em;text-transform:uppercase;border-bottom:1px solid var(--gl);margin-bottom:6px}
+  .ch .ci{display:grid;grid-template-columns:1.3fr .5fr .35fr .35fr .5fr .45fr .35fr;gap:6px}
+  .cc{background:#fff;border:1px solid var(--gb);border-radius:6px;margin-bottom:8px;overflow:hidden;transition:opacity .15s}
+  .cc.ex{opacity:.4}
+  .cb{display:grid;grid-template-columns:36px 1fr auto;align-items:center;padding:10px 14px;gap:12px}
+  .ck{width:18px;height:18px;cursor:pointer;accent-color:var(--nv)}
+  .cm{display:grid;grid-template-columns:1.3fr .5fr .35fr .35fr .5fr .45fr .35fr;gap:6px;align-items:center;font-size:12.5px}
+  .ca{font-weight:500}.cx{font-family:var(--mono);font-size:10px;color:var(--gt)}
+  .cfw{font-weight:600}
+  .sco{display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:50%;font-size:13px;font-weight:700}
+  .sco.h{background:var(--grb);color:var(--grn)}.sco.m{background:var(--ylb);color:var(--ylw)}.sco.l{background:var(--reb);color:var(--red)}
+  .fl{display:flex;gap:4px;flex-wrap:wrap;padding:4px 14px 6px 62px}
+  .fg2{font-size:10px;padding:2px 7px;border-radius:3px;font-weight:600}
+  .fr{background:var(--reb);color:var(--red)}.fy{background:var(--ylb);color:var(--ylw)}.fgr{background:var(--grb);color:var(--grn)}
+  .cbot{padding:4px 14px 10px 62px;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+  .cbot label{font-size:10px;font-weight:600;color:var(--gt);letter-spacing:.04em;text-transform:uppercase;white-space:nowrap}
+  .cbot select{padding:4px 8px;border:1px solid var(--gb);border-radius:4px;font-size:11.5px;font-family:var(--font);outline:none;max-width:220px}
+  .rs{background:var(--ow);border:1px solid var(--gb);border-radius:6px;padding:14px 18px;margin-top:14px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px}
+  .rs .rl{font-size:13px}.rs b{color:var(--nv)}
+  .sec-hdr{padding:10px 14px 6px;border-bottom:2px solid var(--nv);display:flex;justify-content:space-between;align-items:baseline}
+  .sec-hdr .sh-t{font-size:13px;font-weight:700;color:var(--nv);text-transform:uppercase;letter-spacing:.06em}
+  .sec-hdr .sh-c{font-size:11px;color:var(--gt)}
+
+  /* REPORT */
+  .bar{position:sticky;top:0;z-index:100;background:var(--nd);padding:8px 20px;display:flex;justify-content:space-between;align-items:center}
+  .bar span{color:var(--gd);font-size:11px;font-weight:700;letter-spacing:.08em}
+  .bar .bb{display:flex;gap:8px}
+  .bar button{padding:5px 14px;border-radius:4px;font-size:11.5px;cursor:pointer;font-family:var(--font);font-weight:600}
+  .be{background:transparent;color:#fff;border:1px solid rgba(255,255,255,.3)}
+  .bp{background:var(--gd);color:var(--nd);border:none}
+  .rpt{max-width:850px;margin:0 auto;background:#fff;box-shadow:0 1px 4px rgba(0,0,0,.06)}
+  .rh{background:linear-gradient(135deg,var(--nv) 0%,#24537a 80%,var(--nv) 100%);padding:28px 36px 22px;position:relative;overflow:hidden}
+  .rh::after{content:'';position:absolute;top:-30px;right:-40px;width:260px;height:260px;border-radius:50%;background:radial-gradient(circle,rgba(198,164,78,.10) 0%,transparent 70%)}
+  .rh h1{font-size:28px;font-weight:300;color:#fff;position:relative;z-index:1}
+  .rh .rsu{font-size:14px;color:rgba(255,255,255,.75);margin-top:4px;position:relative;z-index:1}
+  .rh .rd{position:absolute;top:28px;right:36px;color:rgba(255,255,255,.7);font-size:13px;z-index:1}
+  .tpb{background:#fdfaf2;border-bottom:1px solid #ede0c4;padding:18px 36px}
+  .tpb .tph{font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#9a8254;margin-bottom:10px}
+  .tp-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px}
+  .tp-card{padding:12px 16px;border-radius:6px;border:1px solid #ede0c4}
+  .tp-card.lo{background:#fef5f3;border-color:#f0d4ce}.tp-card.md2{background:#fefdf5;border-color:#ede0c4}.tp-card.hi{background:#f0f7f2;border-color:#c8e0ce}
+  .tp-label{font-size:9.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;margin-bottom:2px}
+  .tp-card.lo .tp-label{color:var(--red)}.tp-card.md2 .tp-label{color:var(--ylw)}.tp-card.hi .tp-label{color:var(--grn)}
+  .tp-val{font-size:22px;font-weight:400;color:var(--nv)}
+  .bnd{padding:14px 36px;border-bottom:1px solid var(--gl);background:var(--ow)}
+  .bnd .bh{font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--gt);margin-bottom:4px}
+  .bnd p{font-size:12.5px;color:var(--tx);line-height:1.6}
+  .rb{padding:24px 36px 16px}.rb>h2{font-size:17px;font-weight:600;margin-bottom:2px}.rb>.desc{font-size:11.5px;color:var(--gt);margin-bottom:18px}
+  .stl{font-size:13px;font-weight:700;color:var(--nv);margin-top:18px}
+  .ct{width:100%;border-collapse:collapse;font-size:12px;margin-bottom:16px}
+  .ct thead{background:var(--nv)}.ct th{padding:6px 5px;color:#fff;font-size:10px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;text-align:right;border:none}
+  .ct th:first-child{text-align:left;padding-left:8px}.ct th.tl{text-align:left}
+  .ct td{padding:5px 5px;text-align:right;border-bottom:1px solid var(--gl)}.ct td:first-child{text-align:left;padding-left:8px}.ct td.tl{text-align:left}
+  .ct .sr{background:#f0f4f8}.ct .sr td{font-weight:600;color:var(--nv);border-bottom:1px solid var(--gb)}
+  .ct .sd2{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--gd);margin-right:5px;vertical-align:middle}
+  .ct .ar{background:var(--ow);border-top:1.5px solid var(--gb)}.ct .ar td{font-weight:700;font-size:11px;color:var(--nv)}
+  .ct .ml{font-family:var(--mono);font-size:10.5px;color:var(--gt)}.ct .dm{color:var(--gt);font-size:11px}.ct .fw{font-weight:600}
+  .ct a.lk{color:var(--nv);text-decoration:none;border-bottom:1px dashed var(--gd)}.ct a.lk:hover{border-bottom-style:solid}
+  .cond-tag{font-size:9px;padding:1px 5px;border-radius:2px;font-weight:600}
+  .cond-low{background:var(--reb);color:var(--red)}.cond-fair{background:var(--ylb);color:var(--ylw)}.cond-good{background:var(--grb);color:var(--grn)}.cond-exc{background:#e8f0fe;color:#1a56db}
+  .ss{margin-top:22px;margin-bottom:16px}.ss h3{font-size:14px;font-weight:600;margin-bottom:0}
+  .st{width:100%;border-collapse:collapse;font-size:12px}.st thead{background:var(--nv)}
+  .st th{padding:6px 6px;color:#fff;font-size:10px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;text-align:right}.st th:first-child{text-align:left;padding-left:8px}
+  .st td{padding:6px 6px;text-align:right;border-bottom:1px solid var(--gl)}.st td:first-child{text-align:left;padding-left:8px;font-weight:500}
+  .st .tr2{background:var(--nv);color:#fff}.st .tr2 td{color:#fff;font-weight:700;border:none}
+  .rf{border-top:2px solid var(--gd);padding:14px 36px;display:flex;justify-content:space-between;align-items:flex-start}
+  .rf .al{font-size:10px;color:var(--gt)}.rf .an{font-size:15px;font-weight:700;color:var(--nv)}.rf .ai{font-size:11.5px;color:var(--gt)}
+  .rf .di{text-align:right;max-width:340px;font-size:8.5px;color:#9ca3af;line-height:1.4}
+  @media print{.bar{display:none!important}body{background:#fff!important}.rpt{box-shadow:none;max-width:100%}@page{margin:.3in;size:letter}*{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}}
+</style>
+</head>
+<body>
+
+<!-- S1 INPUT -->
+<div id="s1" class="screen on">
+  <div class="ey">Alan Wang Realty Group</div>
+  <div class="ti">CMA Report Generator</div>
+  <p class="su">Paste your MLS report, add pricing and context, then review and generate.</p>
+  <div class="hw"><h3>How it works</h3><ol>
+    <li>Draw your comp boundary on MLSListings and generate the CMA</li>
+    <li>Select all text (<kbd>Cmd</kbd>+<kbd>A</kbd>) and copy (<kbd>Cmd</kbd>+<kbd>C</kbd>)</li>
+    <li>Paste below, fill in AVID pricing, then review and generate</li>
+  </ol></div>
+  <textarea id="pa" placeholder="Paste CMA text here..."></textarea>
+  <div class="fg">
+    <div><label>Agent Name</label><input type="text" id="fn" value="Alan Wang"></div>
+    <div><label>Brokerage</label><input type="text" id="fb" value="KW Elevate"></div>
+    <div><label>Phone</label><input type="text" id="fp" value="(408) 313-4352"></div>
+    <div><label>License #</label><input type="text" id="fl" value=""></div>
+  </div>
+  <div class="sec-label">AVID Condition Pricing</div>
+  <div class="fg">
+    <div><label>Subject Condition</label><select id="fcond"><option value="Low">Low</option><option value="Fair" selected>Fair</option><option value="Good">Good</option><option value="Excellent">Excellent</option></select></div>
+    <div><label>Subject School Zone</label><select id="fz"><option value="">— Not set —</option><option>Cupertino Union SD</option><option>Sunnyvale SD</option><option>Santa Clara Unified</option><option>Fremont Union HSD</option><option>Mountain View Whisman SD</option><option>Los Altos SD</option><option>Campbell Union SD</option><option>San Jose Unified</option><option>Milpitas Unified</option><option>Palo Alto Unified</option></select></div>
+    <div><label>Low Condition Price</label><input type="text" id="plo" placeholder="e.g. $2,800,000"></div>
+    <div><label>Medium Condition Price</label><input type="text" id="pmd" placeholder="e.g. $3,300,000"></div>
+    <div><label>High Condition Price</label><input type="text" id="phi" placeholder="e.g. $3,800,000"></div>
+    <div><label>AVID Notes</label><input type="text" id="favn" placeholder="e.g. Updated kitchen, original bathrooms"></div>
+  </div>
+  <div class="sec-label">Comp Selection Rationale</div>
+  <div class="fg">
+    <div class="full"><label>Boundary Description</label><textarea id="fbnd" placeholder="e.g. Bounded by Alma St, Ravenswood Ave, Middlefield Rd, Palo Alto Ave..."></textarea></div>
+  </div>
+  <button class="btn" style="padding:12px 36px;font-size:14px;background:var(--nv);color:#fff" onclick="doParse()">Review Comps &rarr;</button>
+</div>
+
+<!-- S2 REVIEW -->
+<div id="s2" class="screen">
+  <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px">
+    <div><div class="ey">Step 2</div><div style="font-size:20px;font-weight:300;color:var(--nv)">Review &amp; Score Comparables</div></div>
+    <button class="btn" style="padding:8px 14px;font-size:12px;background:var(--gt);color:#fff" onclick="show('s1')">&#8592; Back</button>
+  </div>
+  <div id="scw"></div>
+  <!-- MAP -->
+  <div class="map-bar" id="map-wrap">
+    <div class="map-hdr">
+      <span class="mh-label">Comp Map</span>
+      <span class="mh-hint">click pin ↔ comp · draw a box / circle / polygon to select comps inside · line = divider</span>
+      <span class="mh-count" id="map-count"></span>
+      <button onclick="clearDrawings()">Clear drawings</button>
+      <button onclick="toggleMap()">Hide map</button>
+    </div>
+    <div id="map"></div>
+  </div>
+  <div class="lg">
+    <div class="li"><span class="ld" style="background:var(--grn)"></span> Strong (70+)</div>
+    <div class="li"><span class="ld" style="background:var(--ylw)"></span> Fair (40–69)</div>
+    <div class="li"><span class="ld" style="background:var(--red)"></span> Weak (&lt;40)</div>
+    <div style="margin-left:auto;display:flex;gap:6px">
+      <button class="btn" style="padding:5px 12px;font-size:11px;background:var(--grn);color:#fff" onclick="filterStrong()">Strong Only (70+)</button>
+      <button class="btn" style="padding:5px 12px;font-size:11px;background:var(--gt);color:#fff" onclick="selectAll()">Select All</button>
+    </div>
+  </div>
+  <div class="ch"><div></div><div class="ci"><span>Address</span><span>Sq Ft</span><span>Beds</span><span>Baths</span><span>Price</span><span>Date</span><span>DOM</span></div><div style="width:42px">Score</div></div>
+  <div id="cl"></div>
+  <div id="rsw"></div>
+</div>
+
+<!-- S3 REPORT -->
+<div id="s3" class="screen">
+  <div class="bar"><span>CMA REPORT</span><div class="bb">
+    <button class="be" onclick="show('s2')">&#8592; Review</button>
+    <button class="bp" onclick="window.print()">Print / Save PDF</button>
+  </div></div>
+  <div class="rpt" id="rpt"></div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js"></script>
+<script>
+var D=null,CS=[],MAP=null,MARKERS=[],DRAWN=null,SUBJ_MARKER=null,MAP_VISIBLE=true;
+var CONDS=["\u2014","Low","Fair","Good","Excellent"];
+var DI=["\u2014","Cupertino Union SD","Sunnyvale SD","Santa Clara Unified","Fremont Union HSD","Mountain View Whisman SD","Los Altos SD","Campbell Union SD","San Jose Unified","Milpitas Unified","Palo Alto Unified","Other"];
+function $(id){return document.getElementById(id)}
+function x(s){var d=document.createElement("div");d.textContent=s;return d.innerHTML}
+function fm(n){if(n==null||isNaN(n))return"\u2014";return"$"+Number(n).toLocaleString("en-US",{maximumFractionDigits:0})}
+function fd(n){if(n==null||isNaN(n))return"\u2014";return"$"+Number(n).toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2})}
+function md(a){if(!a.length)return 0;var s=a.slice().sort(function(x,y){return x-y}),m=Math.floor(s.length/2);return s.length%2?s[m]:(s[m-1]+s[m])/2}
+function show(id){document.querySelectorAll('.screen').forEach(function(el){el.classList.remove('on')});$(id).classList.add('on');window.scrollTo(0,0);if(id==='s2'&&MAP)setTimeout(function(){MAP.invalidateSize()},100)}
+
+/* ── PARSER ── */
+function parse(raw){
+  var lines=raw.split("\n").map(function(l){return l.trim()}).filter(Boolean);
+  var sa="",ssf=null,sb="",sba="",sc="";
+  for(var i=0;i<lines.length;i++){var m=lines[i].match(/Subject Property:\s*(.+)/i);if(m){sa=m[1].trim();break}}
+  var gs=[],cs=null,cc=[],sf=false;
+  var sr=/^Status:\s*(.+)/i,mr=/\b(ML\d{8,}|CC\d{8,})\b/;
+  var xr=/^(Address|Average|Summary|Total|Brief|Comparative|A brief|A map|Property Loc|Researched|This represents|by Alan|KW Elevate|appraisal|MLS#|Sub Type|SqFt|Beds|Baths|L\/S|Status Dt|DOM|Avg Price|Avg \$|Median|Low|High|Avg DOM|County|Area|Class|Land Use|Orig Price|List Price|Sale Price|\$\/Primary|HOA|Zoning|Source|Public|Well-positioned|Featuring|Additional|community|an open|flow seamlessly|Stylish|Set within|updated fixtures|L\.Type|Special|Ownership|Fin Terms|Possession|Off Mrkt|Incorp|City Limit|Expires|COE|Original|List:|Sale:|LA:|LA Ph|Walk Score|Recent|Report Listing|\d+\s*\/\s*\d+|Previous|Next|Checked|Display|Agent|All\s*·|None|Page|per page|Listing|Tax|Photos|History|Parcel|Flood|Foreclosure|Actions|Refine|Save|Carts|Criteria|Email|Print|CMA|Directions|Stats|Export|Quick|Cloud|SYMBIUM|ADU|Market Trends)/i;
+  for(var i=0;i<lines.length;i++){var l=lines[i],sm=l.match(sr);
+    if(sm){if(cs&&cc.length)gs.push({status:cs,comps:cc.slice()});cs=sm[1].trim();cc=[];sf=false;continue}
+    if(xr.test(l)||l.length<8)continue;
+    if(cs&&!sf&&sa){var ap=sa.split(",")[0].trim().split(" "),sh=ap.slice(0,3).join(" ");
+      if(l.indexOf(sh)!==-1&&!mr.test(l)){sf=true;var qm=l.match(/(\d[,\d]*)\s+(\d)\s+(\d\/\d)/);if(qm){ssf=parseInt(qm[1].replace(",",""));sb=qm[2];sba=qm[3]}var cm=l.match(/\b(10[0-9])\b/);if(cm)sc=cm[1];continue}}
+    if(cs&&mr.test(l)){var ml=l.match(mr)[1],pm=l.match(/\$[\d,]+/g),pr=pm?parseInt(pm[0].replace(/[$,]/g,"")):null;
+      var mi=l.indexOf(ml),ad=l.substring(0,mi).trim().replace(/\s+\d+\s*$/,"").trim();
+      var st="",tm=l.match(/Res\.\s*(Townhouse|Condominium|Single Family)/i);if(tm)st="Res. "+tm[1];
+      var af=tm?l.substring(l.indexOf(tm[0])+tm[0].length):l.substring(mi+ml.length);
+      var bm=af.match(/(\d\/\d)/),ba=bm?bm[1]:"";var nm=af.match(/\b[\d,]+\b/g)||[],cn=nm.map(function(n){return n.replace(",","")});
+      var sq="",bd="";for(var j=0;j<cn.length;j++){var v=parseInt(cn[j]);if(v>=500&&v<=5000&&!sq)sq=cn[j];else if(v>=1&&v<=10&&sq&&!bd)bd=cn[j]}
+      var dm="",dd=af.match(/(\d+)\s*$/);if(dd&&parseInt(dd[1])<500)dm=dd[1];
+      var dt=l.match(/(\d{1,2}\/\d{1,2}\/\d{2,4})/),sd=dt?dt[1]:"";
+      cc.push({address:ad||"Unknown",mls:ml,subType:st,sqft:sq?parseInt(sq):null,beds:bd,baths:ba,price:pr,statusDt:sd,dom:dm?parseInt(dm):null,status:cs})}}
+  if(cs&&cc.length)gs.push({status:cs,comps:cc.slice()});
+  return{subjectAddress:sa,subjectSqFt:ssf,subjectBeds:sb,subjectBaths:sba,subjectCode:sc,statusGroups:gs}
+}
+
+/* ── SCORING (TJ: School 25, SqFt 25, Beds 25, Baths 20, DOM 5) ── */
+function scoreComp(c){
+  var s=0,fl=[];
+  var sBd=parseInt(D.subjectBeds)||0,cBd=parseInt(c.beds)||0,bd=Math.abs(cBd-sBd);
+  if(bd===0){s+=25;fl.push({t:"Beds match",c:"g"})}else if(bd===1){s+=12;fl.push({t:"Beds \u00b11",c:"y"})}else fl.push({t:"Beds \u00b1"+bd,c:"r"});
+  var sFb=parseInt((D.subjectBaths||"0/0").split("/")[0])||0,cFb=parseInt((c.baths||"0/0").split("/")[0])||0,bt=Math.abs(cFb-sFb);
+  if(bt===0){s+=20}else if(bt===1){s+=10;fl.push({t:"Bath \u00b11",c:"y"})}else fl.push({t:"Bath \u00b1"+bt,c:"r"});
+  if(c.sqft&&D.subjectSqFt){var p=Math.abs(c.sqft-D.subjectSqFt)/D.subjectSqFt;if(p<=.10){s+=25;fl.push({t:"SqFt within 10%",c:"g"})}else if(p<=.20){s+=17;fl.push({t:"SqFt within 20%",c:"y"})}else if(p<=.30){s+=8;fl.push({t:"SqFt \u00b1"+Math.round(p*100)+"%",c:"y"})}else fl.push({t:"SqFt \u00b1"+Math.round(p*100)+"%",c:"r"})}
+  if(c.dom!=null){if(c.dom<=30)s+=5;else if(c.dom<=60)s+=3;else if(c.dom<=90){s+=1;fl.push({t:"DOM "+c.dom,c:"y"})}else fl.push({t:"DOM "+c.dom+" (stale)",c:"r"})}
+  return{score:Math.min(s,100),flags:fl}
+}
+
+/* ── GEOCODING (Nominatim for map pins) ── */
+function cleanAddr(a){return a.replace(/\s*#\s*\w+/g,"").replace(/\s*(Unit|Apt|Suite|Ste|Bldg|Fl|Floor|Rm|Room)\s*\.?\s*\w*/gi,"").replace(/\s+/g," ").trim()}
+
+function geocodeAll(){
+  if(typeof L==='undefined'||!MAP)return;
+  var cityState="";var pts=D.subjectAddress.split(",");if(pts.length>=2)cityState=pts.slice(1).join(",").trim();
+  var all=[{idx:-1,addr:cleanAddr(D.subjectAddress)}];
+  for(var i=0;i<CS.length;i++){var a=cleanAddr(CS[i].comp.address);all.push({idx:i,addr:a.indexOf(",")!==-1?a:a+", "+cityState})}
+  var done=0,mapped=0;
+  function next(){
+    if(done>=all.length){$("map-count").textContent=mapped+" of "+CS.length+" comps mapped";fitMap();return}
+    var it=all[done];
+    fetch("https://nominatim.openstreetmap.org/search?q="+encodeURIComponent(it.addr)+"&format=json&limit=1",{headers:{"Accept":"application/json"}})
+    .then(function(r){return r.json()}).then(function(d){
+      if(d&&d.length){var lat=parseFloat(d[0].lat),lng=parseFloat(d[0].lon);
+        if(it.idx===-1){addSubjectPin(lat,lng)}else{CS[it.idx].lat=lat;CS[it.idx].lng=lng;addCompPin(it.idx);mapped++}}
+      done++;setTimeout(next,1100);// Nominatim 1req/sec
+    }).catch(function(){done++;setTimeout(next,1100)});
+  }
+  next();
+}
+
+/* ── MAP ── */
+function initMap(){
+  if(typeof L==='undefined'){$("map-wrap").style.display='none';return}
+  if(MAP){MAP.remove();MAP=null;MARKERS=[];SUBJ_MARKER=null}
+  MAP=L.map('map').setView([37.38,-122.0],12);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'&copy; OpenStreetMap',maxZoom:19}).addTo(MAP);
+  DRAWN=new L.FeatureGroup();MAP.addLayer(DRAWN);
+  var dc=new L.Control.Draw({draw:{polyline:{shapeOptions:{color:'#c0392b',weight:3}},polygon:{shapeOptions:{color:'#1b3a5c',fillOpacity:.1}},rectangle:{shapeOptions:{color:'#1b3a5c',fillOpacity:.1}},circle:{shapeOptions:{color:'#1b3a5c',fillOpacity:.1}},marker:false,circlemarker:false},edit:{featureGroup:DRAWN}});
+  MAP.addControl(dc);
+  MAP.on(L.Draw.Event.CREATED,function(e){
+    DRAWN.addLayer(e.layer);
+    if(e.layerType==='polyline')return;// lines are visual only
+    // Select comps inside the drawn shape
+    for(var i=0;i<CS.length;i++){
+      if(CS[i].lat&&CS[i].lng){
+        var inside=false;
+        if(e.layerType==='circle'){var c=e.layer.getLatLng(),r=e.layer.getRadius();inside=c.distanceTo(L.latLng(CS[i].lat,CS[i].lng))<=r}
+        else if(e.layer.getBounds){inside=e.layer.getBounds().contains(L.latLng(CS[i].lat,CS[i].lng))}
+        // For polygon, use more precise check
+        if(e.layerType==='polygon'||e.layerType==='rectangle'){
+          try{var pt=L.latLng(CS[i].lat,CS[i].lng);
+            // Ray casting for polygon
+            if(e.layer.getLatLngs){var poly=e.layer.getLatLngs()[0];inside=pointInPoly(pt,poly)}}catch(ex){}}
+        if(inside){CS[i].included=!CS[i].included}
+      }
+    }
+    renderList();updateMapPins();
+  });
+}
+function pointInPoly(pt,poly){
+  var x=pt.lat,y=pt.lng,inside=false;
+  for(var i=0,j=poly.length-1;i<poly.length;j=i++){
+    var xi=poly[i].lat,yi=poly[i].lng,xj=poly[j].lat,yj=poly[j].lng;
+    if((yi>y)!==(yj>y)&&x<(xj-xi)*(y-yi)/(yj-yi)+xi)inside=!inside}
+  return inside;
+}
+function addSubjectPin(lat,lng){
+  var icon=L.divIcon({className:'',html:'<div class="subj-pin">★</div>',iconSize:[24,24],iconAnchor:[12,12]});
+  SUBJ_MARKER=L.marker([lat,lng],{icon:icon,zIndexOffset:1000}).addTo(MAP);
+  SUBJ_MARKER.bindTooltip("SUBJECT",{permanent:true,direction:'right',className:'',offset:[14,0]});
+}
+function addCompPin(idx){
+  var cs=CS[idx];if(!cs.lat||!cs.lng)return;
+  var cls=cs.score>=70?"pin-hi":cs.score>=40?"pin-md":"pin-lo";
+  if(!cs.included)cls="pin-ex";
+  var icon=L.divIcon({className:'',html:'<div class="score-pin '+cls+'">'+cs.score+'</div>',iconSize:[30,30],iconAnchor:[15,15]});
+  var m=L.marker([cs.lat,cs.lng],{icon:icon}).addTo(MAP);
+  m.bindTooltip(cs.comp.address,{direction:'top',offset:[0,-16]});
+  m.on('click',function(){CS[idx].included=!CS[idx].included;renderList();updateMapPins()});
+  m._csIdx=idx;
+  MARKERS.push(m);
+}
+function updateMapPins(){
+  for(var i=0;i<MARKERS.length;i++){
+    var m=MARKERS[i],cs=CS[m._csIdx];
+    var cls=cs.score>=70?"pin-hi":cs.score>=40?"pin-md":"pin-lo";
+    if(!cs.included)cls="pin-ex";
+    m.setIcon(L.divIcon({className:'',html:'<div class="score-pin '+cls+'">'+cs.score+'</div>',iconSize:[30,30],iconAnchor:[15,15]}));
+  }
+}
+function fitMap(){
+  var pts=[];
+  if(SUBJ_MARKER)pts.push(SUBJ_MARKER.getLatLng());
+  for(var i=0;i<MARKERS.length;i++)pts.push(MARKERS[i].getLatLng());
+  if(pts.length>1)MAP.fitBounds(L.latLngBounds(pts).pad(0.15));
+  else if(pts.length===1)MAP.setView(pts[0],14);
+}
+function clearDrawings(){if(DRAWN)DRAWN.clearLayers()}
+function toggleMap(){
+  var w=$("map-wrap");var m=$("map");
+  MAP_VISIBLE=!MAP_VISIBLE;
+  m.style.display=MAP_VISIBLE?"block":"none";
+  w.querySelector("button:last-child").textContent=MAP_VISIBLE?"Hide map":"Show map";
+  if(MAP_VISIBLE&&MAP)setTimeout(function(){MAP.invalidateSize()},100);
+}
+
+/* ── CENSUS GEOCODER (school zones) ── */
+function autoDetect(){
+  var el=$("ds");el.textContent="Starting...";
+  var cityState="";var pts=D.subjectAddress.split(",");if(pts.length>=2)cityState=pts.slice(1).join(",").trim();
+  var all=[{idx:-1,addr:cleanAddr(D.subjectAddress)}];
+  for(var i=0;i<CS.length;i++){var a=cleanAddr(CS[i].comp.address);all.push({idx:i,addr:a.indexOf(",")!==-1?a:a+", "+cityState})}
+  var done=0,tot=all.length,szr="",detected=0;
+  function next(){
+    if(done>=tot){var m="Done! "+detected+"/"+CS.length+" zones";if(CS.length-detected>0)m+=" \u2022 "+(CS.length-detected)+" manual";if(szr)m+=" \u2022 Subject: "+szr;el.innerHTML="<strong>"+m+"</strong>";updateScores();renderList();return}
+    el.textContent="Detecting "+(done+1)+"/"+tot+"...";var it=all[done];
+    doLookup(it.addr,function(dist){
+      if(!dist){var simpler=it.addr.split(",")[0].trim();simpler=simpler.replace(/\s+(Terrace|Ter|Avenue|Ave|Drive|Dr|Court|Ct|Circle|Cir|Way|Loop|Street|St|Road|Rd|Boulevard|Blvd|Lane|Ln|Place|Pl)\s.*/i,function(m){return m.match(/\s+(Terrace|Ter|Avenue|Ave|Drive|Dr|Court|Ct|Circle|Cir|Way|Loop|Street|St|Road|Rd|Boulevard|Blvd|Lane|Ln|Place|Pl)/i)[0]});simpler+=", "+cityState;
+        if(simpler!==it.addr){doLookup(simpler,function(d2){applyR(it,d2);done++;setTimeout(next,350)});return}}
+      applyR(it,dist);done++;setTimeout(next,350)});
+  }
+  function applyR(it,dist){if(dist){if(it.idx===-1){var sel=$("sz");if(DI.indexOf(dist)===-1)DI.splice(DI.length-1,0,dist);var f=false;for(var o=0;o<sel.options.length;o++){if(sel.options[o].text===dist){sel.selectedIndex=o;f=true;break}}if(!f){var op=document.createElement("option");op.text=dist;op.value=dist;sel.add(op);sel.value=dist}szr=dist}else{CS[it.idx].zone=dist;if(DI.indexOf(dist)===-1)DI.splice(DI.length-1,0,dist);detected++}}}
+  next();
+}
+function doLookup(addr,cb){var u="https://geocoding.geo.census.gov/geocoder/geographies/onelineaddress?address="+encodeURIComponent(addr)+"&benchmark=Public_AR_Current&vintage=Current_Current&layers=14,16&format=json";
+  fetch("https://corsproxy.io/?"+encodeURIComponent(u)).then(function(r){return r.json()}).then(function(d){var dist=null;try{var g=d.result.addressMatches[0].geographies,k=Object.keys(g);for(var j=0;j<k.length;j++){var ly=g[k[j]];if(ly&&ly.length&&ly[0].NAME){dist=ly[0].NAME.replace(/ School District$/i,"").replace(/ Schools$/i,"").trim();if(k[j].toLowerCase().indexOf("elementary")!==-1)break}}}catch(e){}cb(dist)}).catch(function(){cb(null)})}
+
+/* ── UI ── */
+function doParse(){
+  var raw=$("pa").value;if(!raw.trim())return;
+  D=parse(raw);if(!D.statusGroups.length){alert("Could not parse comps. Make sure you copied all text from the CMA PDF.");return}
+  CS=[];
+  for(var g=0;g<D.statusGroups.length;g++){var gr=D.statusGroups[g];for(var c=0;c<gr.comps.length;c++){var sc=scoreComp(gr.comps[c]);CS.push({comp:gr.comps[c],status:gr.status,score:sc.score,flags:sc.flags,included:true,zone:"\u2014",cond:"\u2014",lat:null,lng:null})}}
+  var pri=function(s){s=s.toLowerCase();if(s.indexOf("sold")!==-1)return 1;if(s.indexOf("pending")!==-1)return 2;if(s.indexOf("contingent")!==-1)return 3;if(s.indexOf("active")!==-1)return 4;return 5};
+  CS.sort(function(a,b){return pri(a.status)-pri(b.status)});
+  renderReview();show('s2');
+  initMap();geocodeAll();
+}
+function renderReview(){
+  var h='<div class="sc"><div><div style="font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:rgba(255,255,255,.5);margin-bottom:2px">Subject Property</div>';
+  h+='<h3>'+x(D.subjectAddress||"\u2014")+'</h3></div>';
+  h+='<div style="display:flex;align-items:center;gap:20px;flex-wrap:wrap">';
+  h+='<div class="sts"><div><div class="sv">'+(D.subjectBeds||"\u2014")+'</div><div class="sl">Beds</div></div>';
+  h+='<div><div class="sv">'+(D.subjectBaths||"\u2014")+'</div><div class="sl">Baths</div></div>';
+  h+='<div><div class="sv">'+(D.subjectSqFt?D.subjectSqFt.toLocaleString():"\u2014")+'</div><div class="sl">Sq Ft</div></div></div>';
+  h+='<div class="zr"><label>School Zone</label><select id="sz" onchange="updateScores()">';
+  for(var i=0;i<DI.length;i++)h+='<option>'+DI[i]+'</option>';
+  h+='</select><button class="bd2" onclick="autoDetect()">&#9672; Auto-Detect All Zones</button><span id="ds"></span></div>';
+  h+='</div></div>';
+  $("scw").innerHTML=h;
+  var iz=$("fz").value;if(iz){var sel=$("sz");for(var o=0;o<sel.options.length;o++){if(sel.options[o].text===iz){sel.selectedIndex=o;break}}}
+  renderList();
+}
+function renderList(){
+  var h="",lastStatus="";
+  for(var i=0;i<CS.length;i++){var cs=CS[i],c=cs.comp,cls=cs.included?"":"ex",sc=cs.score>=70?"h":cs.score>=40?"m":"l";
+    if(cs.status!==lastStatus){var cnt=CS.filter(function(x2){return x2.status===cs.status}).length;
+      h+='<div class="sec-hdr" style="margin-top:'+(lastStatus?"16px":"0")+'"><div class="sh-t">'+x(cs.status)+'</div><div class="sh-c">'+cnt+' comp'+(cnt!==1?'s':'')+'</div></div>';lastStatus=cs.status}
+    h+='<div class="cc '+cls+'" id="cc'+i+'"><div class="cb">';
+    h+='<input type="checkbox" class="ck" '+(cs.included?"checked":"")+' onchange="tog('+i+',this.checked)">';
+    h+='<div class="cm"><div><div class="ca">'+x(c.address)+'</div><div class="cx">'+x(c.mls)+' \u00b7 '+x(cs.status)+'</div></div>';
+    h+='<div>'+(c.sqft?c.sqft.toLocaleString():"\u2014")+'</div><div>'+(c.beds||"\u2014")+'</div><div>'+(c.baths||"\u2014")+'</div>';
+    h+='<div class="cfw">'+(c.price?fm(c.price):"\u2014")+'</div><div style="color:var(--gt);font-size:11.5px">'+(c.statusDt||"\u2014")+'</div><div>'+(c.dom!=null?c.dom:"\u2014")+'</div></div>';
+    h+='<div><div class="sco '+sc+'">'+cs.score+'</div></div></div>';
+    if(cs.flags.length){h+='<div class="fl">';for(var f=0;f<cs.flags.length;f++){var fc=cs.flags[f].c==="g"?"fgr":cs.flags[f].c==="y"?"fy":"fr";h+='<span class="fg2 '+fc+'">'+cs.flags[f].t+'</span>'}h+='</div>'}
+    h+='<div class="cbot"><label>Condition:</label><select onchange="setCond('+i+',this.value)">';
+    for(var ci=0;ci<CONDS.length;ci++)h+='<option'+(cs.cond===CONDS[ci]?" selected":"")+'>'+CONDS[ci]+'</option>';
+    h+='</select><label>School Zone:</label><select onchange="setZ('+i+',this.value)">';
+    for(var z=0;z<DI.length;z++)h+='<option'+(cs.zone===DI[z]?" selected":"")+'>'+DI[z]+'</option>';
+    if(cs.zone!=="\u2014"&&DI.indexOf(cs.zone)===-1)h+='<option selected>'+x(cs.zone)+'</option>';
+    h+='</select></div></div>'}
+  $("cl").innerHTML=h;renderSum();
+}
+function renderSum(){
+  var inc=CS.filter(function(c){return c.included}),tot=CS.length;
+  var h='<div class="rs"><div class="rl"><b>'+inc.length+' of '+tot+'</b> comps selected';
+  var zm=0,sz=$("sz")?$("sz").value:"\u2014";
+  for(var i=0;i<CS.length;i++){if(CS[i].included&&CS[i].zone!=="\u2014"&&sz!=="\u2014"&&CS[i].zone!==sz)zm++}
+  if(zm)h+=' \u00b7 <span style="color:var(--red);font-weight:600">'+zm+' in different school zone</span>';
+  h+='</div><button class="btn" style="padding:10px 28px;font-size:13px;background:var(--nv);color:#fff" onclick="doGen()">Generate Report &rarr;</button></div>';
+  $("rsw").innerHTML=h;
+}
+function tog(i,ch){CS[i].included=ch;var el=$("cc"+i);if(ch)el.classList.remove("ex");else el.classList.add("ex");renderSum();updateMapPins()}
+function setZ(i,v){CS[i].zone=v;updateScores()}
+function setCond(i,v){CS[i].cond=v}
+function filterStrong(){for(var i=0;i<CS.length;i++)CS[i].included=CS[i].score>=70;renderList();updateMapPins()}
+function selectAll(){for(var i=0;i<CS.length;i++)CS[i].included=true;renderList();updateMapPins()}
+function updateScores(){var sz=$("sz")?$("sz").value:"\u2014";for(var i=0;i<CS.length;i++){var cs=CS[i],base=scoreComp(cs.comp),bonus=0,zfl=[];if(sz!=="\u2014"&&cs.zone!=="\u2014"){if(cs.zone===sz){bonus=25;zfl.push({t:"School zone match",c:"g"})}else zfl.push({t:"Different school zone",c:"r"})}cs.score=Math.min(base.score+bonus,100);cs.flags=base.flags.concat(zfl)}renderList();updateMapPins()}
+
+/* ── REPORT ── */
+function doGen(){
+  var inc=CS.filter(function(c){return c.included});if(!inc.length){alert("Select at least one comp.");return}
+  var gm={},seen={},fg=[];
+  for(var i=0;i<inc.length;i++){var st=inc[i].status;if(!gm[st])gm[st]=[];gm[st].push({comp:inc[i].comp,cond:inc[i].cond})}
+  // Order: Sold, Pending, Active
+  var order=["Sold"];for(var i=0;i<CS.length;i++){var st=CS[i].status;if(order.indexOf(st)===-1)order.push(st)}
+  for(var o=0;o<order.length;o++){if(gm[order[o]])fg.push({status:order[o],items:gm[order[o]]})}
+
+  var name=$("fn").value||"Alan Wang",brok=$("fb").value||"KW Elevate",phone=$("fp").value||"",lic=$("fl").value||"";
+  var plo=$("plo").value||"",pmd=$("pmd").value||"",phi=$("phi").value||"";
+  var bnd=$("fbnd").value||"",avn=$("favn").value||"",scond=$("fcond").value||"";
+  var today=new Date().toLocaleDateString("en-US",{month:"long",day:"numeric",year:"numeric"});
+  var cityState="";var pts=D.subjectAddress.split(",");if(pts.length>=2)cityState=pts.slice(1).join(",").trim();
+  function zU(a){var f=a+(cityState?", "+cityState:"");var s=f.replace(/[#]/g,"").replace(/\s+/g,"-").replace(/[,]+/g,"-").replace(/-+/g,"-").replace(/(^-|-$)/g,"");return"https://www.zillow.com/homes/"+encodeURIComponent(s)+"_rb/"}
+
+  var h='<div class="rh"><div class="rd">'+today+'</div><h1>Comparative Market Analysis</h1><div class="rsu">Subject Property: '+x(D.subjectAddress||"\u2014");if(scond)h+=' \u00b7 Condition: '+x(scond);h+='</div></div>';
+  if(plo||pmd||phi){h+='<div class="tpb"><div class="tph">AVID Condition-Based Pricing</div><div class="tp-grid">';
+    if(plo)h+='<div class="tp-card lo"><div class="tp-label">Low Condition</div><div class="tp-val">'+x(plo)+'</div></div>';
+    if(pmd)h+='<div class="tp-card md2"><div class="tp-label">Medium Condition</div><div class="tp-val">'+x(pmd)+'</div></div>';
+    if(phi)h+='<div class="tp-card hi"><div class="tp-label">High Condition</div><div class="tp-val">'+x(phi)+'</div></div>';
+    h+='</div>';if(avn)h+='<div style="margin-top:8px;font-size:12px;color:var(--gt)"><strong style="color:var(--nv)">AVID Notes:</strong> '+x(avn)+'</div>';h+='</div>'}
+  if(bnd){h+='<div class="bnd"><div class="bh">Comparable Selection Area</div><p>'+x(bnd)+'</p></div>'}
+
+  h+='<div class="rb"><h2>Brief Summary of Comparable Properties</h2><p class="desc">A brief summary of the subject and comparable properties in this market analysis.</p>';
+  for(var g=0;g<fg.length;g++){var gr=fg[g];
+    h+='<div class="stl">Status: '+x(gr.status)+' ('+gr.items.length+')</div><table class="ct"><thead><tr>';
+    ["Address","MLS#","Sub Type","SqFt Tot","Beds","Baths","L/S Price","Cond.","DOM"].forEach(function(c,i){h+='<th'+(i<=2?' class="tl"':'')+'>'+c+'</th>'});
+    h+='</tr></thead><tbody>';
+    h+='<tr class="sr"><td><span class="sd2"></span>'+x((D.subjectAddress||"Subject").split(",")[0])+'</td><td></td><td class="tl">'+(D.subjectCode||"")+'</td><td>'+(D.subjectSqFt?D.subjectSqFt.toLocaleString():"\u2014")+'</td><td>'+(D.subjectBeds||"\u2014")+'</td><td>'+(D.subjectBaths||"\u2014")+'</td><td></td><td class="tl">'+x(scond||"\u2014")+'</td><td></td></tr>';
+    var sS=0,cS=0,sB=0,cB=0,sP=0,cP=0,sD=0,cD=0;
+    for(var c=0;c<gr.items.length;c++){var comp=gr.items[c].comp,cond=gr.items[c].cond;
+      var condCls=cond==="Low"?"cond-low":cond==="Fair"?"cond-fair":cond==="Good"?"cond-good":cond==="Excellent"?"cond-exc":"";
+      h+='<tr><td><a class="lk" href="'+zU(comp.address)+'" target="_blank">'+x(comp.address)+'</a></td>';
+      h+='<td class="ml">'+x(comp.mls)+'</td><td class="tl dm">'+x(comp.subType)+'</td>';
+      h+='<td>'+(comp.sqft?comp.sqft.toLocaleString():"\u2014")+'</td><td>'+(comp.beds||"\u2014")+'</td><td>'+(comp.baths||"\u2014")+'</td>';
+      h+='<td class="fw">'+(comp.price?fm(comp.price):"\u2014")+'</td>';
+      h+='<td class="tl">'+(cond&&cond!=="\u2014"?'<span class="cond-tag '+condCls+'">'+x(cond)+'</span>':'\u2014')+'</td>';
+      h+='<td>'+(comp.dom!=null?comp.dom:"\u2014")+'</td></tr>';
+      if(comp.sqft){sS+=comp.sqft;cS++}if(comp.beds){sB+=parseInt(comp.beds);cB++}if(comp.price){sP+=comp.price;cP++}if(comp.dom!=null){sD+=comp.dom;cD++}}
+    h+='<tr class="ar"><td colspan="3" style="text-align:right;padding-right:10px">Average ('+gr.items.length+')</td><td>'+(cS?Math.round(sS/cS).toLocaleString():"\u2014")+'</td><td>'+(cB?Math.round(sB/cB):"\u2014")+'</td><td></td><td class="fw">'+(cP?fm(Math.round(sP/cP)):"\u2014")+'</td><td></td><td>'+(cD?Math.round(sD/cD):"\u2014")+'</td></tr></tbody></table>'}
+
+  h+='<div class="ss"><h3>Summary</h3><table class="st"><thead><tr>';
+  ["Status","Total","Avg Price","Avg $ Per Sq.Ft.","Median","Low","High","Avg DOM"].forEach(function(s,i){h+='<th'+(i===0?' style="text-align:left"':'')+'>'+s+'</th>'});
+  h+='</tr></thead><tbody>';
+  var aP=[],aPsf=[],aD=[];
+  for(var g=0;g<fg.length;g++){var gr=fg[g],pr=[],ps=[],dm=[];
+    for(var c=0;c<gr.items.length;c++){var comp=gr.items[c].comp;if(comp.price){pr.push(comp.price);aP.push(comp.price)}if(comp.price&&comp.sqft){var v=comp.price/comp.sqft;ps.push(v);aPsf.push(v)}if(comp.dom!=null){dm.push(comp.dom);aD.push(comp.dom)}}
+    var ap=pr.length?pr.reduce(function(a,b){return a+b},0)/pr.length:0;
+    h+='<tr><td>'+x(gr.status)+'</td><td>'+gr.items.length+'</td><td class="fw">'+fm(Math.round(ap))+'</td><td>'+fd(ps.length?ps.reduce(function(a,b){return a+b},0)/ps.length:0)+'</td><td>'+fm(md(pr))+'</td><td>'+fm(pr.length?Math.min.apply(null,pr):0)+'</td><td>'+fm(pr.length?Math.max.apply(null,pr):0)+'</td><td>'+(dm.length?Math.round(dm.reduce(function(a,b){return a+b},0)/dm.length):"\u2014")+'</td></tr>'}
+  var tAp=aP.length?aP.reduce(function(a,b){return a+b},0)/aP.length:0;
+  h+='<tr class="tr2"><td>Total</td><td>'+aP.length+'</td><td>'+fm(Math.round(tAp))+'</td><td>'+fd(aPsf.length?aPsf.reduce(function(a,b){return a+b},0)/aPsf.length:0)+'</td><td>'+fm(md(aP))+'</td><td>'+fm(aP.length?Math.min.apply(null,aP):0)+'</td><td>'+fm(aP.length?Math.max.apply(null,aP):0)+'</td><td>'+(aD.length?Math.round(aD.reduce(function(a,b){return a+b},0)/aD.length):"\u2014")+'</td></tr></tbody></table></div></div>';
+
+  h+='<div class="rf"><div><div class="al">Researched and prepared by</div><div class="an">'+x(name)+'</div><div class="ai">'+x(brok);if(phone)h+=' &middot; '+x(phone);if(lic)h+=' &middot; DRE# '+x(lic);
+  h+='</div></div><div class="di">This represents an estimated sale price for this property. It is not the same as the opinion of value in an appraisal developed by a licensed appraiser under the Uniform Standards of Professional Appraisal Practice.</div></div>';
+  $("rpt").innerHTML=h;show('s3');
+}
+</script>
+</body>
+</html>
